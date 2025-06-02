@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import GUI from "lil-gui";
+import { Pane } from "tweakpane";
 
 import { UtilCamera } from "./UtilCamera.js";
 
@@ -28,7 +28,10 @@ dirLight.shadow.camera.far = 200;
 dirLight.shadow.mapSize.set(1024, 1024);
 
 scene.add(dirLight);
-// scene.add(new THREE.CameraHelper(dirLight.shadow.camera));
+
+const dirLightCameraHelper = new THREE.CameraHelper(dirLight.shadow.camera);
+dirLightCameraHelper.visible = false;
+scene.add(dirLightCameraHelper);
 
 // Camera
 const camera = new UtilCamera(
@@ -38,7 +41,7 @@ const camera = new UtilCamera(
   1000
 );
 camera.position.z = 30;
-camera.position.y = 1;
+camera.position.y = 15;
 
 // Objects
 const manager = new THREE.LoadingManager();
@@ -124,11 +127,77 @@ camera.addEventListener("change", function () {
   console.log("Camera changed:", camera.position, camera.quaternion);
 });
 
-const gui = new GUI();
-gui.add(camera, "frontal").name("Frontal");
-gui.add(camera, "planta").name("Planta");
-gui.add(camera, "lateral").name("Lateral");
-gui.add(camera, "isometric").name("Isométrica");
+const sun = {
+  position: {
+    x: 45,
+    y: 45,
+  },
+};
+
+// Función para actualizar la posición de la luz
+function updateSunPosition() {
+  const phi = THREE.MathUtils.degToRad(90 - sun.position.y);
+  const theta = THREE.MathUtils.degToRad(sun.position.x - 90);
+
+  const radius = 100; // Radio de la órbita del sol
+  const x = radius * Math.sin(phi) * Math.cos(theta);
+  const y = radius * Math.cos(phi);
+  const z = radius * Math.sin(phi) * Math.sin(theta);
+
+  dirLight.position.set(x, y, z);
+}
+
+// Paneles GUI
+const pane = new Pane();
+
+const viewPane = pane.addFolder({
+  title: "Vistas",
+});
+const fontralBtn = viewPane.addButton({
+  title: "Fontal",
+});
+fontralBtn.on("click", () => {
+  camera.frontal();
+});
+const plantaBtn = viewPane.addButton({
+  title: "Planta",
+});
+plantaBtn.on("click", () => {
+  camera.planta();
+});
+const lateralBtn = viewPane.addButton({
+  title: "Lateral",
+});
+lateralBtn.on("click", () => {
+  camera.lateral();
+});
+const isometricBtn = viewPane.addButton({
+  title: "Isométrica",
+});
+isometricBtn.on("click", () => {
+  camera.isometric();
+});
+
+const sunPane = pane.addFolder({
+  title: "Sol",
+});
+sunPane.addBinding(dirLightCameraHelper, "visible", {
+  label: "Ayuda",
+});
+sunPane
+  .addBinding(sun, "position", {
+    label: "Posición",
+    picker: "inline",
+    expanded: true,
+    x: { inverted: false, min: -90, max: 90, step: 1 },
+    y: { inverted: true, min: 0, max: 90, step: 1 },
+  })
+  .on("change", () => {
+    updateSunPosition();
+  });
+
+// Actualizar posición inicial
+updateSunPosition();
 
 function render() {
   renderer.render(scene, camera);
