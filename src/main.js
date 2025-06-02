@@ -5,6 +5,8 @@ import GUI from "lil-gui";
 
 import { UtilCamera } from "./UtilCamera.js";
 
+import modelObject from "./models/Volumenes.glb";
+
 // Scene
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xffffff); // Set background color to white
@@ -42,7 +44,7 @@ camera.position.y = 1;
 const manager = new THREE.LoadingManager();
 const loader = new GLTFLoader(manager);
 loader.load(
-  "src/models/Volumenes.glb",
+  modelObject,
   (gltf) => {
     const model = gltf.scene;
 
